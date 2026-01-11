@@ -1,19 +1,17 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { Context } from "../../main";
+import { getJobById } from "../../utils/api";
 
 const JobDetails = () => {
 	const { id } = useParams();
 	const [job, setJob] = useState({});
 	const navigateTo = useNavigate();
+	const location = useLocation();
 	const { isAuthorized, user } = useContext(Context);
 
 	useEffect(() => {
-		axios
-			.get(`http://localhost:4000/api/v1/job/${id}`, {
-				withCredentials: true,
-			})
+		getJobById(id)
 			.then((res) => {
 				setJob(res.data.job);
 			})
@@ -24,7 +22,7 @@ const JobDetails = () => {
 
 	const handleApplyClick = () => {
 		if (!isAuthorized) {
-			navigateTo("/login");
+			navigateTo("/login", { state: { from: location.pathname } });
 		} else {
 			navigateTo(`/application/${job._id}`);
 		}

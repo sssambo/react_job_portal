@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { RiLock2Fill } from "react-icons/ri";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
 import toast from "react-hot-toast";
+import { resetPassword } from "../../utils/api";
 
 const ResetPassword = () => {
 	const [newPassword, setNewPassword] = useState("");
@@ -38,20 +38,10 @@ const ResetPassword = () => {
 		}
 		try {
 			setLoading(true);
-			const { data } = await axios.post(
-				"http://localhost:4000/api/v1/user/reset-password",
-				{ email, otp, newPassword, confirmPassword },
-				{
-					headers: {
-						"Content-Type": "application/json",
-					},
-					withCredentials: true,
-				}
-			);
+			const { data } = await resetPassword(email, otp, newPassword, confirmPassword);
 			toast.success(data.message);
 			setNewPassword("");
 			setConfirmPassword("");
-			// Navigate to login page
 			navigate("/login");
 		} catch (error) {
 			toast.error(

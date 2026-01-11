@@ -7,7 +7,6 @@ import PopularCategories from "./PopularCategories";
 import PopularCompanies from "./PopularCompanies";
 
 const Home = () => {
-	// Guests can now view the home page
 	return (
 		<>
 			<section className="homePage page">

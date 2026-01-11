@@ -8,7 +8,6 @@ import ForgotPassword from "./components/Auth/ForgotPassword";
 import VerifyOTP from "./components/Auth/VerifyOTP";
 import ResetPassword from "./components/Auth/ResetPassword";
 import { Toaster } from "react-hot-toast";
-import axios from "axios";
 import Navbar from "./components/Layout/Navbar";
 import Footer from "./components/Layout/Footer";
 import Home from "./components/Home/Home";
@@ -20,18 +19,14 @@ import PostJob from "./components/Job/PostJob";
 import NotFound from "./components/NotFound/NotFound";
 import MyJobs from "./components/Job/MyJobs";
 import VisitHistory from "./components/VisitHistory/VisitHistory";
+import { getUser } from "./utils/api";
 
 const App = () => {
 	const { isAuthorized, setIsAuthorized, setUser } = useContext(Context);
 	useEffect(() => {
 		const fetchUser = async () => {
 			try {
-				const response = await axios.get(
-					"http://localhost:4000/api/v1/user/getuser",
-					{
-						withCredentials: true,
-					}
-				);
+				const response = await getUser();
 				setUser(response.data.user);
 				setIsAuthorized(true);
 			} catch (error) {

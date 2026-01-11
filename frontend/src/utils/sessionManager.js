@@ -1,4 +1,4 @@
-import axios from "axios";
+import { trackJobView as apiTrackJobView, getVisitHistory as apiGetVisitHistory, deleteVisitRecord as apiDeleteVisitRecord } from "./api";
 
 export const getOrCreateSessionId = () => {
 	let sessionId = localStorage.getItem("guestSessionId");
@@ -17,22 +17,14 @@ export const trackJobView = async (jobData) => {
 	const sessionId = getOrCreateSessionId();
 
 	try {
-		await axios.post(
-			"http://localhost:4000/api/v1/visits/track-view",
-			{
-				sessionId,
-				jobId: jobData.jobId || null,
-				externalJobUrl: jobData.url || null,
-				jobTitle: jobData.title,
-				companyName: jobData.company || null,
-				referrer: jobData.referrer || window.location.href,
-			},
-			{
-				headers: {
-					"Content-Type": "application/json",
-				},
-			}
-		);
+		await apiTrackJobView({
+			sessionId,
+			jobId: jobData.jobId || null,
+			externalJobUrl: jobData.url || null,
+			jobTitle: jobData.title,
+			companyName: jobData.company || null,
+			referrer: jobData.referrer || window.location.href,
+		});
 	} catch (error) {
 		console.error("Failed to track job view:", error);
 	}
@@ -42,9 +34,7 @@ export const getVisitHistory = async () => {
 	const sessionId = getOrCreateSessionId();
 
 	try {
-		const response = await axios.get(
-			`http://localhost:4000/api/v1/visits/history/${sessionId}`
-		);
+		const response = await apiGetVisitHistory(sessionId);
 		return response.data.data || [];
 	} catch (error) {
 		console.error("Failed to fetch visit history:", error);
@@ -54,9 +44,7 @@ export const getVisitHistory = async () => {
 
 export const deleteVisitRecord = async (recordId) => {
 	try {
-		await axios.delete(
-			`http://localhost:4000/api/v1/visits/history/${recordId}`
-		);
+		await apiDeleteVisitRecord(recordId);
 	} catch (error) {
 		console.error("Failed to delete visit record:", error);
 	}

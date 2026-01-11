@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Context } from "../../main";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import ResumeModal from "./ResumeModal";
+import { getEmployerApplications, getJobSeekerApplications, deleteApplication as apiDeleteApplication } from "../../utils/api";
 
 const MyApplications = () => {
   const { user } = useContext(Context);
@@ -17,21 +17,13 @@ const MyApplications = () => {
   useEffect(() => {
     try {
       if (user && user.role === "Employer") {
-        axios
-          .get("http://localhost:4000/api/v1/application/employer/getall", {
-            withCredentials: true,
-          })
-          .then((res) => {
-            setApplications(res.data.applications);
-          });
+        getEmployerApplications().then((res) => {
+          setApplications(res.data.applications);
+        });
       } else {
-        axios
-          .get("http://localhost:4000/api/v1/application/jobseeker/getall", {
-            withCredentials: true,
-          })
-          .then((res) => {
-            setApplications(res.data.applications);
-          });
+        getJobSeekerApplications().then((res) => {
+          setApplications(res.data.applications);
+        });
       }
     } catch (error) {
       toast.error(error.response.data.message);
@@ -44,16 +36,12 @@ const MyApplications = () => {
 
   const deleteApplication = (id) => {
     try {
-      axios
-        .delete(`http://localhost:4000/api/v1/application/delete/${id}`, {
-          withCredentials: true,
-        })
-        .then((res) => {
-          toast.success(res.data.message);
-          setApplications((prevApplication) =>
-            prevApplication.filter((application) => application._id !== id)
-          );
-        });
+      apiDeleteApplication(id).then((res) => {
+        toast.success(res.data.message);
+        setApplications((prevApplication) =>
+          prevApplication.filter((application) => application._id !== id)
+        );
+      });
     } catch (error) {
       toast.error(error.response.data.message);
     }

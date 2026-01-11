@@ -1,37 +1,34 @@
 import React, { useContext, useState } from "react";
 import { MdOutlineMailOutline } from "react-icons/md";
 import { RiLock2Fill } from "react-icons/ri";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { FaRegUser } from "react-icons/fa";
-import axios from "axios";
+import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import toast from "react-hot-toast";
 import { Context } from "../../main";
+import { userLogin } from "../../utils/api";
 
 const Login = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [role, setRole] = useState("");
+	const [showPassword, setShowPassword] = useState(false);
+	const location = useLocation();
+	const navigateTo = useNavigate();
 
 	const { isAuthorized, setIsAuthorized } = useContext(Context);
 
 	const handleLogin = async (e) => {
 		e.preventDefault();
 		try {
-			const { data } = await axios.post(
-				"http://localhost:4000/api/v1/user/login",
-				{ email, password, role },
-				{
-					headers: {
-						"Content-Type": "application/json",
-					},
-					withCredentials: true,
-				}
-			);
+			const { data } = await userLogin(email, password, role);
 			toast.success(data.message);
 			setEmail("");
 			setPassword("");
 			setRole("");
 			setIsAuthorized(true);
+			const from = location.state?.from || "/";
+			navigateTo(from);
 		} catch (error) {
 			toast.error(error.response.data.message);
 		}
@@ -83,13 +80,25 @@ const Login = () => {
 							<label>Password</label>
 							<div>
 								<input
-									type="password"
+									type={showPassword ? "text" : "password"}
 									placeholder="Enter your Password"
 									value={password}
 									onChange={(e) =>
 										setPassword(e.target.value)
 									}
 								/>
+								<span
+									onClick={() =>
+										setShowPassword(!showPassword)
+									}
+									style={{ cursor: "pointer" }}
+								>
+									{showPassword ? (
+										<AiOutlineEyeInvisible />
+									) : (
+										<AiOutlineEye />
+									)}
+								</span>
 								<RiLock2Fill />
 							</div>
 						</div>

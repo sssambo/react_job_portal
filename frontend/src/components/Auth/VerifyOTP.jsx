@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { RiLock2Fill } from "react-icons/ri";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
 import toast from "react-hot-toast";
+import { verifyOTP } from "../../utils/api";
 
 const VerifyOTP = () => {
 	const [otp, setOtp] = useState("");
@@ -26,19 +26,9 @@ const VerifyOTP = () => {
 		}
 		try {
 			setLoading(true);
-			const { data } = await axios.post(
-				"http://localhost:4000/api/v1/user/verify-otp",
-				{ email, otp },
-				{
-					headers: {
-						"Content-Type": "application/json",
-					},
-					withCredentials: true,
-				}
-			);
+			const { data } = await verifyOTP(email, otp);
 			toast.success(data.message);
 			setOtp("");
-			// Navigate to reset password page
 			navigate(
 				`/reset-password?email=${encodeURIComponent(
 					email
