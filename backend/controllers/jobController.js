@@ -2,14 +2,16 @@ import { catchAsyncErrors } from "../middlewares/catchAsyncError.js";
 import { Job } from "../models/jobSchema.js";
 import ErrorHandler from "../middlewares/error.js";
 
+// Get all jobs (expired: false)
 export const getAllJobs = catchAsyncErrors(async (req, res, next) => {
-	const jobs = await Job.find({ expired: false });
+	const jobs = await Job.find();
 	res.status(200).json({
 		success: true,
 		jobs,
 	});
 });
 
+// Post a new job
 export const postJob = catchAsyncErrors(async (req, res, next) => {
 	const { role } = req.user;
 	if (role === "Job Seeker") {
@@ -20,59 +22,70 @@ export const postJob = catchAsyncErrors(async (req, res, next) => {
 			)
 		);
 	}
+
 	const {
 		title,
 		description,
 		category,
+		jobType,
+		workMode,
 		country,
 		city,
-		location,
-		fixedSalary,
-		salaryFrom,
-		salaryTo,
+		address,
+		salary,
+		roles,
+		benefits,
 	} = req.body;
 
-	if (!title || !description || !category || !country || !city || !location) {
-		return next(new ErrorHandler("Please provide full job details.", 400));
-	}
-
-	if ((!salaryFrom || !salaryTo) && !fixedSalary) {
+	// Required basic fields
+	if (!title || !description || !category || !jobType || !roles?.length) {
 		return next(
-			new ErrorHandler(
-				"Please either provide fixed salary or ranged salary.",
-				400
-			)
+			new ErrorHandler("Please provide all required job details.", 400)
 		);
 	}
 
-	if (salaryFrom && salaryTo && fixedSalary) {
+	// Salary validation
+	if (salary?.type === "Fixed" && !salary.fixed) {
+		return next(new ErrorHandler("Fixed salary value is required.", 400));
+	}
+	if (
+		salary?.type === "Range" &&
+		(salary.from === undefined || salary.to === undefined)
+	) {
 		return next(
-			new ErrorHandler(
-				"Cannot Enter Fixed and Ranged Salary together.",
-				400
-			)
+			new ErrorHandler("Salary range requires from and to values.", 400)
 		);
 	}
+
 	const postedBy = req.user._id;
+
 	const job = await Job.create({
 		title,
 		description,
 		category,
-		country,
-		city,
-		location,
-		fixedSalary,
-		salaryFrom,
-		salaryTo,
+		jobType,
+		workMode,
+		location: {
+			country,
+			city,
+			address,
+			isRemote: workMode === "Remote",
+		},
+		salary,
+		roles,
+		benefits: benefits || [],
 		postedBy,
+		source: "Employer",
 	});
-	res.status(200).json({
+
+	res.status(201).json({
 		success: true,
 		message: "Job Posted Successfully!",
 		job,
 	});
 });
 
+// Get jobs posted by the current user
 export const getMyJobs = catchAsyncErrors(async (req, res, next) => {
 	const { role } = req.user;
 	if (role === "Job Seeker") {
@@ -84,12 +97,10 @@ export const getMyJobs = catchAsyncErrors(async (req, res, next) => {
 		);
 	}
 	const myJobs = await Job.find({ postedBy: req.user._id });
-	res.status(200).json({
-		success: true,
-		myJobs,
-	});
+	res.status(200).json({ success: true, myJobs });
 });
 
+// Update a job
 export const updateJob = catchAsyncErrors(async (req, res, next) => {
 	const { role } = req.user;
 	if (role === "Job Seeker") {
@@ -100,22 +111,42 @@ export const updateJob = catchAsyncErrors(async (req, res, next) => {
 			)
 		);
 	}
+
 	const { id } = req.params;
 	let job = await Job.findById(id);
-	if (!job) {
-		return next(new ErrorHandler("OOPS! Job not found.", 404));
+	if (!job) return next(new ErrorHandler("Job not found.", 404));
+
+	// Optional: validate salary if provided in update
+	const { salary } = req.body;
+	if (salary) {
+		if (salary.type === "Fixed" && !salary.fixed) {
+			return next(
+				new ErrorHandler("Fixed salary value is required.", 400)
+			);
+		}
+		if (
+			salary.type === "Range" &&
+			(salary.from === undefined || salary.to === undefined)
+		) {
+			return next(
+				new ErrorHandler(
+					"Salary range requires from and to values.",
+					400
+				)
+			);
+		}
 	}
+
 	job = await Job.findByIdAndUpdate(id, req.body, {
 		new: true,
 		runValidators: true,
 		useFindAndModify: false,
 	});
-	res.status(200).json({
-		success: true,
-		message: "Job Updated!",
-	});
+
+	res.status(200).json({ success: true, message: "Job Updated!", job });
 });
 
+// Delete a job
 export const deleteJob = catchAsyncErrors(async (req, res, next) => {
 	const { role } = req.user;
 	if (role === "Job Seeker") {
@@ -126,30 +157,24 @@ export const deleteJob = catchAsyncErrors(async (req, res, next) => {
 			)
 		);
 	}
+
 	const { id } = req.params;
 	const job = await Job.findById(id);
-	if (!job) {
-		return next(new ErrorHandler("OOPS! Job not found.", 404));
-	}
+	if (!job) return next(new ErrorHandler("Job not found.", 404));
+
 	await job.deleteOne();
-	res.status(200).json({
-		success: true,
-		message: "Job Deleted!",
-	});
+	res.status(200).json({ success: true, message: "Job Deleted!" });
 });
 
+// Get a single job
 export const getSingleJob = catchAsyncErrors(async (req, res, next) => {
 	const { id } = req.params;
 	try {
 		const job = await Job.findById(id);
-		if (!job) {
-			return next(new ErrorHandler("Job not found.", 404));
-		}
-		res.status(200).json({
-			success: true,
-			job,
-		});
+		if (!job) return next(new ErrorHandler("Job not found.", 404));
+
+		res.status(200).json({ success: true, job });
 	} catch (error) {
-		return next(new ErrorHandler(`Invalid ID / CastError`, 404));
+		return next(new ErrorHandler("Invalid ID / CastError", 404));
 	}
 });

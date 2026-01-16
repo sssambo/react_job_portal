@@ -1,30 +1,45 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Context } from "../../main";
 import { getJobById } from "../../utils/api";
 
 const JobDetails = () => {
 	const { id } = useParams();
-	const [job, setJob] = useState({});
-	const navigateTo = useNavigate();
+	const [job, setJob] = useState(null);
+	const navigate = useNavigate();
 	const location = useLocation();
 	const { isAuthorized, user } = useContext(Context);
 
 	useEffect(() => {
 		getJobById(id)
-			.then((res) => {
-				setJob(res.data.job);
-			})
-			.catch((error) => {
-				navigateTo("/notfound");
-			});
-	}, [id, navigateTo]);
+			.then((res) => setJob(res.data.job))
+			.catch(() => navigate("/notfound"));
+	}, [id, navigate]);
 
 	const handleApplyClick = () => {
 		if (!isAuthorized) {
-			navigateTo("/login", { state: { from: location.pathname } });
+			navigate("/login", { state: { from: location.pathname } });
 		} else {
-			navigateTo(`/application/${job._id}`);
+			navigate(`/application/${job._id}`);
+		}
+	};
+
+	if (!job) return null;
+
+	const renderSalary = () => {
+		if (!job.salary) return "Not provided";
+		switch (job.salary.type) {
+			case "Fixed":
+				return `${job.salary.currency} ${job.salary.fixed} / ${job.salary.period}`;
+			case "Range":
+				return `${job.salary.currency} ${job.salary.from} - ${job.salary.to} / ${job.salary.period}`;
+			case "Negotiable":
+			case "Flexible":
+				return job.salary.type;
+			case "Unpaid":
+				return "Unpaid / Volunteer";
+			default:
+				return "Not provided";
 		}
 	};
 
@@ -34,39 +49,61 @@ const JobDetails = () => {
 				<h3>Job Details</h3>
 				<div className="banner">
 					<p>
-						Title: <span> {job.title}</span>
+						<strong>Title:</strong> {job.title}
 					</p>
 					<p>
-						Category: <span>{job.category}</span>
+						<strong>Category:</strong> {job.category}
 					</p>
 					<p>
-						Country: <span>{job.country}</span>
+						<strong>Job Type:</strong> {job.jobType}
 					</p>
 					<p>
-						City: <span>{job.city}</span>
+						<strong>Work Mode:</strong> {job.workMode}
 					</p>
 					<p>
-						Location: <span>{job.location}</span>
+						<strong>Location:</strong>{" "}
+						{job.location?.isRemote
+							? "Remote"
+							: `${job.location?.address || ""}, ${
+									job.location?.city || ""
+							  }, ${job.location?.country || ""}`}
 					</p>
 					<p>
-						Description: <span>{job.description}</span>
+						<strong>Description:</strong> {job.description}
+					</p>
+					{job.roles?.length > 0 && (
+						<>
+							<p>
+								<strong>Responsibilities:</strong>
+							</p>
+							<ul>
+								{job.roles?.map((role, idx) => (
+									<li key={idx}>{role}</li>
+								))}
+							</ul>
+						</>
+					)}
+					{job.benefits?.length > 0 && (
+						<>
+							<p>
+								<strong>Benefits / Perks:</strong>
+							</p>
+							<ul>
+								{job.benefits.map((benefit, idx) => (
+									<li key={idx}>{benefit}</li>
+								))}
+							</ul>
+						</>
+					)}
+					<p>
+						<strong>Salary:</strong> {renderSalary()}
 					</p>
 					<p>
-						Job Posted On: <span>{job.jobPostedOn}</span>
+						<strong>Posted On:</strong>{" "}
+						{new Date(job.createdAt).toLocaleDateString()}
 					</p>
-					<p>
-						Salary:{" "}
-						{job.fixedSalary ? (
-							<span>{job.fixedSalary}</span>
-						) : (
-							<span>
-								{job.salaryFrom} - {job.salaryTo}
-							</span>
-						)}
-					</p>
-					{user && user.role === "Employer" ? (
-						<></>
-					) : (
+
+					{(!user || user.role !== "Employer") && (
 						<button onClick={handleApplyClick}>
 							{isAuthorized ? "Apply Now" : "Login to Apply"}
 						</button>

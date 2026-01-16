@@ -1,199 +1,270 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { Context } from "../../main";
 import { postJob } from "../../utils/api";
+
 const PostJob = () => {
-	const [title, setTitle] = useState("");
-	const [description, setDescription] = useState("");
-	const [category, setCategory] = useState("");
-	const [country, setCountry] = useState("");
-	const [city, setCity] = useState("");
-	const [location, setLocation] = useState("");
-	const [salaryFrom, setSalaryFrom] = useState("");
-	const [salaryTo, setSalaryTo] = useState("");
-	const [fixedSalary, setFixedSalary] = useState("");
-	const [salaryType, setSalaryType] = useState("default");
-
 	const { isAuthorized, user } = useContext(Context);
+	const navigate = useNavigate();
 
-	const handleJobPost = async (e) => {
-		e.preventDefault();
-		if (salaryType === "Fixed Salary") {
-			setSalaryFrom("");
-			setSalaryFrom("");
-		} else if (salaryType === "Ranged Salary") {
-			setFixedSalary("");
+	const [form, setForm] = useState({
+		title: "",
+		description: "",
+		category: "",
+		jobType: "",
+		workMode: "Onsite",
+		country: "",
+		city: "",
+		address: "",
+		salaryType: "Negotiable",
+		salaryFixed: "",
+		salaryFrom: "",
+		salaryTo: "",
+		currency: "NGN",
+		roles: [""], // array of responsibilities
+		benefits: [""], // array of perks
+	});
+
+	if (!isAuthorized || user?.role !== "Employer") navigate("/");
+
+	const handleChange = (e, idx, arrayField) => {
+		const { name, value } = e.target;
+		if (arrayField) {
+			const updated = [...form[arrayField]];
+			updated[idx] = value;
+			setForm({ ...form, [arrayField]: updated });
 		} else {
-			setSalaryFrom("");
-			setSalaryTo("");
-			setFixedSalary("");
+			setForm({ ...form, [name]: value });
 		}
-		await postJob(
-			fixedSalary.length >= 4
-				? {
-						title,
-						description,
-						category,
-						country,
-						city,
-						location,
-						fixedSalary,
-				  }
-				: {
-						title,
-						description,
-						category,
-						country,
-						city,
-						location,
-						salaryFrom,
-						salaryTo,
-				  }
-		)
-			.then((res) => {
-				toast.success(res.data.message);
-			})
-			.catch((err) => {
-				toast.error(err.response.data.message);
-			});
 	};
 
-	const navigateTo = useNavigate();
-	if (!isAuthorized || (user && user.role !== "Employer")) {
-		navigateTo("/");
-	}
+	const addArrayField = (field) =>
+		setForm({ ...form, [field]: [...form[field], ""] });
+	const removeArrayField = (field, idx) => {
+		const updated = form[field].filter((_, i) => i !== idx);
+		setForm({ ...form, [field]: updated });
+	};
+
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+		const payload = {
+			title: form.title,
+			description: form.description,
+			category: form.category,
+			jobType: form.jobType,
+			workMode: form.workMode,
+			location: {
+				country: form.country,
+				city: form.city,
+				address: form.address,
+				isRemote: form.workMode === "Remote",
+			},
+			salary: {
+				type: form.salaryType,
+				fixed:
+					form.salaryType === "Fixed"
+						? Number(form.salaryFixed)
+						: undefined,
+				from:
+					form.salaryType === "Range"
+						? Number(form.salaryFrom)
+						: undefined,
+				to:
+					form.salaryType === "Range"
+						? Number(form.salaryTo)
+						: undefined,
+				currency: form.currency,
+			},
+			roles: form.roles.filter(Boolean),
+			benefits: form.benefits.filter(Boolean),
+		};
+
+		try {
+			const res = await postJob(payload);
+			toast.success(res.data.message);
+		} catch (err) {
+			toast.error(err.response?.data?.message || "Job post failed");
+		}
+	};
 
 	return (
-		<>
-			<div className="job_post page">
-				<div className="container">
-					<h3>POST NEW JOB</h3>
-					<form onSubmit={handleJobPost}>
-						<div className="wrapper">
+		<div className="job_post page">
+			<div className="container">
+				<h3>POST NEW JOB</h3>
+				<form onSubmit={handleSubmit}>
+					<input
+						name="title"
+						placeholder="Job Title"
+						value={form.title}
+						onChange={handleChange}
+					/>
+					<textarea
+						name="description"
+						placeholder="Job Summary"
+						value={form.description}
+						onChange={handleChange}
+					/>
+					<select
+						name="category"
+						value={form.category}
+						onChange={handleChange}
+					>
+						<option value="">Select Category</option>
+						<option value="Frontend Development">
+							Frontend Development
+						</option>
+						<option value="Backend Development">
+							Backend Development
+						</option>
+						<option value="Design">Design</option>
+						<option value="Marketing">Marketing</option>
+					</select>
+					<select
+						name="jobType"
+						value={form.jobType}
+						onChange={handleChange}
+					>
+						<option value="">Job Type</option>
+						<option value="Full-Time">Full-Time</option>
+						<option value="Part-Time">Part-Time</option>
+						<option value="Contract">Contract</option>
+						<option value="Internship">Internship</option>
+						<option value="Volunteer">Volunteer</option>
+					</select>
+					<select
+						name="workMode"
+						value={form.workMode}
+						onChange={handleChange}
+					>
+						<option value="Onsite">Onsite</option>
+						<option value="Remote">Remote</option>
+						<option value="Hybrid">Hybrid</option>
+					</select>
+
+					{form.workMode !== "Remote" && (
+						<>
 							<input
-								type="text"
-								value={title}
-								onChange={(e) => setTitle(e.target.value)}
-								placeholder="Job Title"
-							/>
-							<select
-								value={category}
-								onChange={(e) => setCategory(e.target.value)}
-							>
-								<option value="">Select Category</option>
-								<option value="Graphics & Design">
-									Graphics & Design
-								</option>
-								<option value="Mobile App Development">
-									Mobile App Development
-								</option>
-								<option value="Frontend Web Development">
-									Frontend Web Development
-								</option>
-								<option value="Business Development Executive">
-									Business Development Executive
-								</option>
-								<option value="Account & Finance">
-									Account & Finance
-								</option>
-								<option value="Artificial Intelligence">
-									Artificial Intelligence
-								</option>
-								<option value="Video Animation">
-									Video Animation
-								</option>
-								<option value="MEAN Stack Development">
-									MEAN STACK Development
-								</option>
-								<option value="MERN Stack Development">
-									MERN STACK Development
-								</option>
-								<option value="Data Entry Operator">
-									Data Entry Operator
-								</option>
-							</select>
-						</div>
-						<div className="wrapper">
-							<input
-								type="text"
-								value={country}
-								onChange={(e) => setCountry(e.target.value)}
+								name="country"
 								placeholder="Country"
+								value={form.country}
+								onChange={handleChange}
 							/>
 							<input
-								type="text"
-								value={city}
-								onChange={(e) => setCity(e.target.value)}
+								name="city"
 								placeholder="City"
+								value={form.city}
+								onChange={handleChange}
 							/>
-						</div>
+							<input
+								name="address"
+								placeholder="Address"
+								value={form.address}
+								onChange={handleChange}
+							/>
+						</>
+					)}
+
+					<select
+						name="salaryType"
+						value={form.salaryType}
+						onChange={handleChange}
+					>
+						<option value="Negotiable">Negotiable</option>
+						<option value="Flexible">Flexible</option>
+						<option value="Fixed">Fixed</option>
+						<option value="Range">Range</option>
+						<option value="Unpaid">Unpaid / Volunteer</option>
+					</select>
+
+					{form.salaryType === "Fixed" && (
 						<input
-							type="text"
-							value={location}
-							onChange={(e) => setLocation(e.target.value)}
-							placeholder="Location"
+							name="salaryFixed"
+							type="number"
+							placeholder="Fixed Salary"
+							value={form.salaryFixed}
+							onChange={handleChange}
 						/>
-						<div className="salary_wrapper">
-							<select
-								value={salaryType}
-								onChange={(e) => setSalaryType(e.target.value)}
-							>
-								<option value="default">
-									Select Salary Type
-								</option>
-								<option value="Fixed Salary">
-									Fixed Salary
-								</option>
-								<option value="Ranged Salary">
-									Ranged Salary
-								</option>
-							</select>
-							<div>
-								{salaryType === "default" ? (
-									<p>Please provide Salary Type *</p>
-								) : salaryType === "Fixed Salary" ? (
-									<input
-										type="number"
-										placeholder="Enter Fixed Salary"
-										value={fixedSalary}
-										onChange={(e) =>
-											setFixedSalary(e.target.value)
-										}
-									/>
-								) : (
-									<div className="ranged_salary">
-										<input
-											type="number"
-											placeholder="Salary From"
-											value={salaryFrom}
-											onChange={(e) =>
-												setSalaryFrom(e.target.value)
-											}
-										/>
-										<input
-											type="number"
-											placeholder="Salary To"
-											value={salaryTo}
-											onChange={(e) =>
-												setSalaryTo(e.target.value)
-											}
-										/>
-									</div>
-								)}
+					)}
+					{form.salaryType === "Range" && (
+						<>
+							<input
+								name="salaryFrom"
+								type="number"
+								placeholder="Salary From"
+								value={form.salaryFrom}
+								onChange={handleChange}
+							/>
+							<input
+								name="salaryTo"
+								type="number"
+								placeholder="Salary To"
+								value={form.salaryTo}
+								onChange={handleChange}
+							/>
+						</>
+					)}
+
+					<div>
+						<h4>Roles / Responsibilities</h4>
+						{form.roles.map((r, idx) => (
+							<div key={idx}>
+								<input
+									value={r}
+									onChange={(e) =>
+										handleChange(e, idx, "roles")
+									}
+								/>
+								<button
+									type="button"
+									onClick={() =>
+										removeArrayField("roles", idx)
+									}
+								>
+									Remove
+								</button>
 							</div>
-						</div>
-						<textarea
-							rows="10"
-							value={description}
-							onChange={(e) => setDescription(e.target.value)}
-							placeholder="Job Description"
-						/>
-						<button type="submit">Create Job</button>
-					</form>
-				</div>
+						))}
+						<button
+							type="button"
+							onClick={() => addArrayField("roles")}
+						>
+							Add Role
+						</button>
+					</div>
+
+					<div>
+						<h4>Benefits / Perks</h4>
+						{form.benefits.map((b, idx) => (
+							<div key={idx}>
+								<input
+									value={b}
+									onChange={(e) =>
+										handleChange(e, idx, "benefits")
+									}
+								/>
+								<button
+									type="button"
+									onClick={() =>
+										removeArrayField("benefits", idx)
+									}
+								>
+									Remove
+								</button>
+							</div>
+						))}
+						<button
+							type="button"
+							onClick={() => addArrayField("benefits")}
+						>
+							Add Benefit
+						</button>
+					</div>
+
+					<button type="submit">Create Job</button>
+				</form>
 			</div>
-		</>
+		</div>
 	);
 };
 
