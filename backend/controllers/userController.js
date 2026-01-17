@@ -3,6 +3,7 @@ import { User } from "../models/userSchema.js";
 import ErrorHandler from "../middlewares/error.js";
 import { sendToken } from "../utils/jwtToken.js";
 import { Resend } from "resend";
+import cloudinary from "cloudinary";
 
 export const register = catchAsyncErrors(async (req, res, next) => {
 	const { name, email, phone, password, role } = req.body;
@@ -63,6 +64,46 @@ export const logout = catchAsyncErrors(async (req, res, next) => {
 
 export const getUser = catchAsyncErrors((req, res, next) => {
 	const user = req.user;
+	res.status(200).json({
+		success: true,
+		user,
+	});
+});
+
+export const updateProfile = catchAsyncErrors(async (req, res, next) => {
+	const newData = {
+		name: req.body.name,
+		email: req.body.email,
+		phone: req.body.phone,
+		profile: {
+			bio: req.body.bio,
+			location: req.body.location,
+			skills: req.body.skills ? req.body.skills.split(",") : [],
+		},
+	};
+
+	if (req.files && req.files.resume) {
+		const user = await User.findById(req.user._id);
+		if (user.profile && user.profile.resume && user.profile.resume.public_id) {
+			await cloudinary.v2.uploader.destroy(user.profile.resume.public_id);
+		}
+		const file = req.files.resume;
+		const cloudinaryResponse = await cloudinary.v2.uploader.upload(
+			file.tempFilePath,
+			{ folder: "RESUMES" }
+		);
+		newData.profile.resume = {
+			public_id: cloudinaryResponse.public_id,
+			url: cloudinaryResponse.secure_url,
+		};
+	}
+
+	const user = await User.findByIdAndUpdate(req.user._id, newData, {
+		new: true,
+		runValidators: true,
+		useFindAndModify: false,
+	});
+
 	res.status(200).json({
 		success: true,
 		user,

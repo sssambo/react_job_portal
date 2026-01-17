@@ -19,6 +19,7 @@ import PostJob from "./components/Job/PostJob";
 import NotFound from "./components/NotFound/NotFound";
 import MyJobs from "./components/Job/MyJobs";
 import VisitHistory from "./components/VisitHistory/VisitHistory";
+import Profile from "./components/Profile/Profile";
 import { getUser } from "./utils/api";
 
 const App = () => {
@@ -60,6 +61,7 @@ const App = () => {
 					<Route path="/job/post" element={<PostJob />} />
 					<Route path="/job/me" element={<MyJobs />} />
 					<Route path="/visit-history" element={<VisitHistory />} />
+					<Route path="/profile" element={<Profile />} />
 					<Route path="*" element={<NotFound />} />
 				</Routes>
 				<Footer />

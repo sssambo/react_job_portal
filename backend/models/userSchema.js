@@ -42,6 +42,15 @@ const userSchema = new mongoose.Schema({
 		type: Date,
 		default: Date.now,
 	},
+	profile: {
+		bio: { type: String, default: "" },
+		skills: [String],
+		resume: {
+			public_id: String,
+			url: String,
+		},
+		location: { type: String, default: "" },
+	},
 });
 
 //ENCRYPTING THE PASSWORD WHEN THE USER REGISTERS OR MODIFIES HIS PASSWORD
