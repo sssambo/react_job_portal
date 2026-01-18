@@ -1,27 +1,66 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {
+	useContext,
+	useEffect,
+	useState,
+	useCallback,
+	useRef,
+} from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../../main";
 import { trackJobView } from "../../utils/sessionManager";
 import { getAllJobs } from "../../utils/api";
+import AdSenseComponent from "../Common/AdSenseComponent";
 
 const Jobs = () => {
 	const [jobs, setJobs] = useState([]);
+	const [page, setPage] = useState(1);
+	const [hasMore, setHasMore] = useState(true);
+	const [loading, setLoading] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedCategory, setSelectedCategory] = useState("");
 	const [selectedCity, setSelectedCity] = useState("");
 	const { isAuthorized } = useContext(Context);
 	const navigateTo = useNavigate();
+	const observer = useRef();
+
+	const lastJobElementRef = useCallback(
+		(node) => {
+			if (loading) return;
+			if (observer.current) observer.current.disconnect();
+			observer.current = new IntersectionObserver((entries) => {
+				if (entries[0].isIntersecting && hasMore) {
+					setPage((prevPage) => prevPage + 1);
+				}
+			});
+			if (node) observer.current.observe(node);
+		},
+		[loading, hasMore],
+	);
 
 	useEffect(() => {
-		try {
-			getAllJobs().then((res) => {
-				setJobs(res.data.jobs || []);
-			});
-		} catch (error) {
-			console.log(error);
-		}
-	}, []);
+		const fetchJobs = async () => {
+			setLoading(true);
+			try {
+				const res = await getAllJobs(page, 9);
+				setJobs((prevJobs) => {
+					const newJobs = res.data.jobs || [];
+					const combined = [...prevJobs, ...newJobs];
+					return Array.from(
+						new Map(
+							combined.map((item) => [item._id, item]),
+						).values(),
+					);
+				});
+				setHasMore(res.data.hasMore);
+			} catch (error) {
+				console.log(error);
+			} finally {
+				setLoading(false);
+			}
+		};
+		fetchJobs();
+	}, [page]);
 
 	const handleJobClick = (job) => {
 		trackJobView({
@@ -33,18 +72,33 @@ const Jobs = () => {
 	};
 
 	const filteredJobs = jobs.filter((job) => {
-		const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase());
-		const matchesCategory = selectedCategory ? job.category === selectedCategory : true;
-		const matchesCity = selectedCity ? job.location?.city === selectedCity : true;
+		const matchesSearch = job.title
+			.toLowerCase()
+			.includes(searchQuery.toLowerCase());
+		const matchesCategory = selectedCategory
+			? job.category === selectedCategory
+			: true;
+		const matchesCity = selectedCity
+			? job.location?.city === selectedCity
+			: true;
 		return matchesSearch && matchesCategory && matchesCity;
 	});
 
 	const categories = [...new Set(jobs.map((job) => job.category))];
-	const cities = [...new Set(jobs.map((job) => job.location?.city).filter(Boolean))];
+	const cities = [
+		...new Set(jobs.map((job) => job.location?.city).filter(Boolean)),
+	];
 
 	return (
-		<section className="jobs page">
-			<div className="container">
+		<section className="jobs page" style={{ display: "flex", gap: "20px" }}>
+			<div
+				className="sidebar-ads"
+				style={{ width: "200px", flexShrink: 0 }}
+			>
+				<AdSenseComponent slot="sidebar-slot-1" />
+				<AdSenseComponent slot="sidebar-slot-2" />
+			</div>
+			<div className="container" style={{ flexGrow: 1 }}>
 				<h1>ALL AVAILABLE JOBS</h1>
 				<div className="search-filters">
 					<input
@@ -53,36 +107,87 @@ const Jobs = () => {
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 					/>
-					<select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
+					<select
+						value={selectedCategory}
+						onChange={(e) => setSelectedCategory(e.target.value)}
+					>
 						<option value="">All Categories</option>
 						{categories.map((cat) => (
-							<option key={cat} value={cat}>{cat}</option>
+							<option key={cat} value={cat}>
+								{cat}
+							</option>
 						))}
 					</select>
-					<select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)}>
+					<select
+						value={selectedCity}
+						onChange={(e) => setSelectedCity(e.target.value)}
+					>
 						<option value="">All Cities</option>
 						{cities.map((city) => (
-							<option key={city} value={city}>{city}</option>
+							<option key={city} value={city}>
+								{city}
+							</option>
 						))}
 					</select>
 				</div>
-				<div className="banner">
-					{filteredJobs.length > 0 ? (
-						filteredJobs.map((element) => (
-							<div className="card" key={element._id}>
-								<p>{element.title}</p>
-								<p>{element.category}</p>
-								<p>{element.location?.country}</p>
-								<Link
-									to={`/job/${element._id}`}
-									onClick={() => handleJobClick(element)}
-								>
-									Job Details
-								</Link>
-							</div>
-						))
-					) : (
-						<p>No jobs found.</p>
+				<div
+					className="banner"
+					style={{
+						display: "grid",
+						gridTemplateColumns: "repeat(3, 1fr)",
+						gap: "20px",
+					}}
+				>
+					{filteredJobs.length > 0
+						? filteredJobs.map((element, index) => {
+								const elements = [];
+
+								const card = (
+									<div
+										className="card"
+										key={element._id}
+										ref={
+											filteredJobs.length === index + 1
+												? lastJobElementRef
+												: null
+										}
+									>
+										<p>{element.title}</p>
+										<p>{element.category}</p>
+										<p>{element.location?.country}</p>
+										<Link
+											to={`/job/${element._id}`}
+											onClick={() =>
+												handleJobClick(element)
+											}
+										>
+											Job Details
+										</Link>
+									</div>
+								);
+								elements.push(card);
+
+								if ((index + 1) % 3 === 0) {
+									elements.push(
+										<div
+											key={`ad-${index}`}
+											style={{ gridColumn: "1 / -1" }}
+										>
+											<AdSenseComponent
+												slot="in-feed-slot"
+												format="fluid"
+											/>
+										</div>,
+									);
+								}
+
+								return elements;
+							})
+						: !loading && <p>No jobs found.</p>}
+					{loading && (
+						<div style={{ gridColumn: "1 / -1" }}>
+							<p>Loading more jobs...</p>
+						</div>
 					)}
 				</div>
 			</div>

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:4000/api/v1";
+const API_BASE_URL = "http://localhost:5000/api/v1";
 
 const api = axios.create({
 	baseURL: API_BASE_URL,
@@ -17,11 +17,9 @@ export const userLogin = (email, password, role) =>
 export const userRegister = (name, phone, email, role, password) =>
 	api.post("/user/register", { name, phone, email, role, password });
 
-export const getUser = () =>
-	api.get("/user/getuser");
+export const getUser = () => api.get("/user/getuser");
 
-export const userLogout = () =>
-	api.get("/user/logout");
+export const userLogout = () => api.get("/user/logout");
 
 export const forgotPassword = (email) =>
 	api.post("/user/forgot-password", { email });
@@ -30,26 +28,26 @@ export const verifyOTP = (email, otp) =>
 	api.post("/user/verify-otp", { email, otp });
 
 export const resetPassword = (email, otp, newPassword, confirmPassword) =>
-	api.post("/user/reset-password", { email, otp, newPassword, confirmPassword });
+	api.post("/user/reset-password", {
+		email,
+		otp,
+		newPassword,
+		confirmPassword,
+	});
 
 // Job endpoints
-export const getAllJobs = () =>
-	api.get("/job/getall");
+export const getAllJobs = (page = 1, limit = 10) =>
+	api.get(`/job/getall?page=${page}&limit=${limit}`);
 
-export const getJobById = (id) =>
-	api.get(`/job/${id}`);
+export const getJobById = (id) => api.get(`/job/${id}`);
 
-export const getMyJobs = () =>
-	api.get("/job/getmyjobs");
+export const getMyJobs = () => api.get("/job/getmyjobs");
 
-export const postJob = (jobData) =>
-	api.post("/job/post", jobData);
+export const postJob = (jobData) => api.post("/job/post", jobData);
 
-export const updateJob = (id, jobData) =>
-	api.put(`/job/update/${id}`, jobData);
+export const updateJob = (id, jobData) => api.put(`/job/update/${id}`, jobData);
 
-export const deleteJob = (id) =>
-	api.delete(`/job/delete/${id}`);
+export const deleteJob = (id) => api.delete(`/job/delete/${id}`);
 
 // Application endpoints
 export const getEmployerApplications = () =>

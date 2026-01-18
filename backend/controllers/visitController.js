@@ -14,7 +14,7 @@ export const trackJobView = catchAsyncErrors(async (req, res, next) => {
 
 	if (!sessionId || !jobTitle) {
 		return next(
-			new ErrorHandler("Please provide session ID and job title !")
+			new ErrorHandler("Please provide session ID and job title !"),
 		);
 	}
 

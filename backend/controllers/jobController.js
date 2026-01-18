@@ -2,12 +2,22 @@ import { catchAsyncErrors } from "../middlewares/catchAsyncError.js";
 import { Job } from "../models/jobSchema.js";
 import ErrorHandler from "../middlewares/error.js";
 
-// Get all jobs (expired: false)
+// Get all jobs (expired: false) with pagination
 export const getAllJobs = catchAsyncErrors(async (req, res, next) => {
-	const jobs = await Job.find();
+	const page = parseInt(req.query.page) || 1;
+	const limit = parseInt(req.query.limit) || 9;
+	const skip = (page - 1) * limit;
+
+	const jobs = await Job.find().skip(skip).limit(limit);
+	const totalJobs = await Job.countDocuments();
+
 	res.status(200).json({
 		success: true,
 		jobs,
+		totalJobs,
+		currentPage: page,
+		totalPages: Math.ceil(totalJobs / limit),
+		hasMore: skip + jobs.length < totalJobs,
 	});
 });
 
@@ -18,8 +28,8 @@ export const postJob = catchAsyncErrors(async (req, res, next) => {
 		return next(
 			new ErrorHandler(
 				"Job Seeker not allowed to access this resource.",
-				400
-			)
+				400,
+			),
 		);
 	}
 
@@ -40,7 +50,7 @@ export const postJob = catchAsyncErrors(async (req, res, next) => {
 	// Required basic fields
 	if (!title || !description || !category || !jobType || !roles?.length) {
 		return next(
-			new ErrorHandler("Please provide all required job details.", 400)
+			new ErrorHandler("Please provide all required job details.", 400),
 		);
 	}
 
@@ -53,7 +63,7 @@ export const postJob = catchAsyncErrors(async (req, res, next) => {
 		(salary.from === undefined || salary.to === undefined)
 	) {
 		return next(
-			new ErrorHandler("Salary range requires from and to values.", 400)
+			new ErrorHandler("Salary range requires from and to values.", 400),
 		);
 	}
 
@@ -92,8 +102,8 @@ export const getMyJobs = catchAsyncErrors(async (req, res, next) => {
 		return next(
 			new ErrorHandler(
 				"Job Seeker not allowed to access this resource.",
-				400
-			)
+				400,
+			),
 		);
 	}
 	const myJobs = await Job.find({ postedBy: req.user._id });
@@ -107,8 +117,8 @@ export const updateJob = catchAsyncErrors(async (req, res, next) => {
 		return next(
 			new ErrorHandler(
 				"Job Seeker not allowed to access this resource.",
-				400
-			)
+				400,
+			),
 		);
 	}
 
@@ -121,7 +131,7 @@ export const updateJob = catchAsyncErrors(async (req, res, next) => {
 	if (salary) {
 		if (salary.type === "Fixed" && !salary.fixed) {
 			return next(
-				new ErrorHandler("Fixed salary value is required.", 400)
+				new ErrorHandler("Fixed salary value is required.", 400),
 			);
 		}
 		if (
@@ -131,8 +141,8 @@ export const updateJob = catchAsyncErrors(async (req, res, next) => {
 			return next(
 				new ErrorHandler(
 					"Salary range requires from and to values.",
-					400
-				)
+					400,
+				),
 			);
 		}
 	}
@@ -153,8 +163,8 @@ export const deleteJob = catchAsyncErrors(async (req, res, next) => {
 		return next(
 			new ErrorHandler(
 				"Job Seeker not allowed to access this resource.",
-				400
-			)
+				400,
+			),
 		);
 	}
 
