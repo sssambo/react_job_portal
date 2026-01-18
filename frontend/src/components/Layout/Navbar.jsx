@@ -18,7 +18,7 @@ const Navbar = () => {
 			setIsAuthorized(false);
 			navigateTo("/login");
 		} catch (error) {
-			toast.error(error.response.data.message), setIsAuthorized(true);
+			(toast.error(error.response.data.message), setIsAuthorized(true));
 		}
 	};
 
@@ -73,7 +73,10 @@ const Navbar = () => {
 								</>
 							) : null}
 							<li>
-								<Link to={"/profile"} onClick={() => setShow(false)}>
+								<Link
+									to={"/profile"}
+									onClick={() => setShow(false)}
+								>
 									PROFILE
 								</Link>
 							</li>

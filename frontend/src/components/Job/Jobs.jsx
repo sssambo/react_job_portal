@@ -90,16 +90,13 @@ const Jobs = () => {
 	];
 
 	return (
-		<section className="jobs page" style={{ display: "flex", gap: "20px" }}>
-			<div
-				className="sidebar-ads"
-				style={{ width: "200px", flexShrink: 0 }}
-			>
+		<section className="jobs page">
+			<div className="sidebar-ads">
 				<AdSenseComponent slot="sidebar-slot-1" />
+				ads
 				<AdSenseComponent slot="sidebar-slot-2" />
 			</div>
-			<div className="container" style={{ flexGrow: 1 }}>
-				<h1>ALL AVAILABLE JOBS</h1>
+			<div className="container">
 				<div className="search-filters">
 					<input
 						type="text"
@@ -130,14 +127,8 @@ const Jobs = () => {
 						))}
 					</select>
 				</div>
-				<div
-					className="banner"
-					style={{
-						display: "grid",
-						gridTemplateColumns: "repeat(3, 1fr)",
-						gap: "20px",
-					}}
-				>
+				<h1>ALL AVAILABLE JOBS</h1>
+				<div className="banner">
 					{filteredJobs.length > 0
 						? filteredJobs.map((element, index) => {
 								const elements = [];
@@ -165,13 +156,14 @@ const Jobs = () => {
 										</Link>
 									</div>
 								);
+
 								elements.push(card);
 
 								if ((index + 1) % 3 === 0) {
 									elements.push(
 										<div
 											key={`ad-${index}`}
-											style={{ gridColumn: "1 / -1" }}
+											className="ad-slot"
 										>
 											<AdSenseComponent
 												slot="in-feed-slot"
@@ -184,13 +176,15 @@ const Jobs = () => {
 								return elements;
 							})
 						: !loading && <p>No jobs found.</p>}
+
 					{loading && (
-						<div style={{ gridColumn: "1 / -1" }}>
+						<div className="loading">
 							<p>Loading more jobs...</p>
 						</div>
 					)}
 				</div>
 			</div>
+			<div className="homecategories">categories tab</div>
 		</section>
 	);
 };

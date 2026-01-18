@@ -7,18 +7,21 @@ export const getAllJobs = catchAsyncErrors(async (req, res, next) => {
 	const page = parseInt(req.query.page) || 1;
 	const limit = parseInt(req.query.limit) || 9;
 	const skip = (page - 1) * limit;
-
-	const jobs = await Job.find().skip(skip).limit(limit);
-	const totalJobs = await Job.countDocuments();
-
-	res.status(200).json({
-		success: true,
-		jobs,
-		totalJobs,
-		currentPage: page,
-		totalPages: Math.ceil(totalJobs / limit),
-		hasMore: skip + jobs.length < totalJobs,
-	});
+	try {
+		const jobs = await Job.find().skip(skip).limit(limit);
+		const totalJobs = await Job.countDocuments();
+		res.status(200).json({
+			success: true,
+			jobs,
+			totalJobs,
+			currentPage: page,
+			totalPages: Math.ceil(totalJobs / limit),
+			hasMore: skip + jobs.length < totalJobs,
+		});
+	} catch (error) {
+		console.error("Error fetching jobs:", error);
+		return next(new ErrorHandler("Failed to fetch jobs.", 500));
+	}
 });
 
 // Post a new job
