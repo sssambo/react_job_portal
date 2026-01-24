@@ -8,25 +8,22 @@ function Footer() {
 	const { isAuthorized } = useContext(Context);
 	return (
 		<footer className="footerShow">
-			<div>&copy; All Rights Reserved by Abhishek.</div>
+			<div>&copy; All Rights Reserved by sssamb0.</div>
 			<div>
-				<Link to={"https://github.com/exclusiveabhi"} target="github">
+				<Link to={"https://github.com/sssambo"} target="github">
 					<FaGithub></FaGithub>
 				</Link>
-				<Link
-					to={"https://leetcode.com/u/exclusiveabhi/"}
-					target="leetcode"
-				>
+				<Link to={"https://leetcode.com/u/sssambo/"} target="leetcode">
 					<SiLeetcode></SiLeetcode>
 				</Link>
 				<Link
-					to={"https://www.linkedin.com/in/abhishek-rajput-/"}
+					to={"https://www.linkedin.com/in/sssambo/"}
 					target="linkedin"
 				>
 					<FaLinkedin></FaLinkedin>
 				</Link>
 				<Link
-					to={"https://www.instagram.com/exclusiveabhi/"}
+					to={"https://www.instagram.com/sssambo/"}
 					target="instagram"
 				>
 					<RiInstagramFill></RiInstagramFill>
