@@ -77,6 +77,3 @@ export const deleteVisitRecord = (recordId) =>
 	api.delete(`/visits/history/${recordId}`);
 
 export default api;
-
-export const clearAllVisitHistory = (sessionId) =>
-	api.delete(`/visits/history/clear/${sessionId}`);

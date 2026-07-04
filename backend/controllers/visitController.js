@@ -52,22 +52,6 @@ export const getVisitHistory = catchAsyncErrors(async (req, res, next) => {
 	});
 });
 
-
-export const clearAllVisitHistory = catchAsyncErrors(async (req, res, next) => {
-	const { sessionId } = req.params;
-
-	if (!sessionId) {
-		return next(new ErrorHandler("Please provide session ID !"));
-	}
-
-	await VisitHistory.deleteMany({ sessionId });
-
-	res.status(200).json({
-		success: true,
-		message: "Visit history cleared successfully !",
-	});
-});
-
 export const deleteVisitRecord = catchAsyncErrors(async (req, res, next) => {
 	const { id } = req.params;
 
