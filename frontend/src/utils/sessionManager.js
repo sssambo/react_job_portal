@@ -1,4 +1,4 @@
-import { trackJobView as apiTrackJobView, getVisitHistory as apiGetVisitHistory, deleteVisitRecord as apiDeleteVisitRecord } from "./api";
+import { trackJobView as apiTrackJobView, getVisitHistory as apiGetVisitHistory, deleteVisitRecord as apiDeleteVisitRecord, clearAllVisitHistory as apiClearAllVisitHistory } from "./api";
 
 export const getOrCreateSessionId = () => {
 	let sessionId = localStorage.getItem("guestSessionId");
@@ -52,9 +52,10 @@ export const deleteVisitRecord = async (recordId) => {
 
 export const clearAllHistory = async () => {
 	const sessionId = getOrCreateSessionId();
-	const history = await getVisitHistory();
 
-	for (const record of history) {
-		await deleteVisitRecord(record._id);
+	try {
+		await apiClearAllVisitHistory(sessionId);
+	} catch (error) {
+		console.error("Failed to clear visit history:", error);
 	}
 };
