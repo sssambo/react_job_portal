@@ -4,9 +4,7 @@ export const getOrCreateSessionId = () => {
 	let sessionId = localStorage.getItem("guestSessionId");
 
 	if (!sessionId) {
-		sessionId = `guest_${Date.now()}_${Math.random()
-			.toString(36)
-			.substr(2, 9)}`;
+		sessionId = `guest_${Date.now()}_${crypto.randomUUID()}`;
 		localStorage.setItem("guestSessionId", sessionId);
 	}
 
@@ -51,7 +49,6 @@ export const deleteVisitRecord = async (recordId) => {
 };
 
 export const clearAllHistory = async () => {
-	const sessionId = getOrCreateSessionId();
 	const history = await getVisitHistory();
 
 	for (const record of history) {
