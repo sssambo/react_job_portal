@@ -5,8 +5,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Context } from "../../main";
 import { postApplication } from "../../utils/api";
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024;
-
 const Application = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -40,7 +38,7 @@ const Application = () => {
     }
     
     // Check file size (limit to 2MB)
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > 2 * 1024 * 1024) {
       setFileError("File size should be less than 2MB");
       setResume(null);
       return;
