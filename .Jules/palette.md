@@ -1,0 +1,1 @@
+## 2026-07-04 - Password Toggle Accessibility\n**Learning:** The password visibility toggle spans lacked keyboard navigability and screen reader support, leaving keyboard-only users unable to reveal their passwords.\n**Action:** Add `role="button"`, `tabIndex={0}`, `aria-label`, and an `onKeyDown` handler for Enter and Space keys to make custom interactive spans fully accessible.
