@@ -121,6 +121,15 @@ const Register = () => {
 									onClick={() =>
 										setShowPassword(!showPassword)
 									}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter' || e.key === ' ') {
+											e.preventDefault();
+											setShowPassword(!showPassword);
+										}
+									}}
+									role="button"
+									tabIndex={0}
+									aria-label={showPassword ? "Hide password" : "Show password"}
 									style={{ cursor: "pointer" }}
 								>
 									{showPassword ? (
